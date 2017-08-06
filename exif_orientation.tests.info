@@ -1,0 +1,5 @@
+[ExifOrientationTest]
+name = Exif Orientation
+description = Tests automatic image orientation.
+group = Exif Orientation
+file = exif_orientation.test

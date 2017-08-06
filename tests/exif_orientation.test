@@ -5,7 +5,7 @@
  * Tests for exif_orientation.module.
  */
 
-class ExifOrientationTest extends DrupalWebTestCase {
+class ExifOrientationTest extends BackdropWebTestCase {
   private $admin;
 
   public static function getInfo() {
@@ -21,18 +21,18 @@ class ExifOrientationTest extends DrupalWebTestCase {
     parent::setUp($modules);
 
     // Set to high quality because we don't want encoding artifacts.
-    variable_set('image_jpeg_quality', 98);
+    config_set('system.core', 'image_jpeg_quality', 98);
 
     // Code from UserPictureTestCase:
 
     // Enable user pictures.
-    variable_set('user_pictures', 1);
+    config_set('system.core', 'user_pictures', 1);
 
     // Test if directories specified in settings exist in filesystem.
     $file_dir = 'public://';
     $file_check = file_prepare_directory($file_dir, FILE_CREATE_DIRECTORY);
 
-    $picture_dir = variable_get('user_picture_path', 'pictures');
+    $picture_dir = config_get('system.core', 'user_picture_path', 'pictures');
     $picture_path = $file_dir . $picture_dir;
 
     $pic_check = file_prepare_directory($picture_path, FILE_CREATE_DIRECTORY);
@@ -45,30 +45,30 @@ class ExifOrientationTest extends DrupalWebTestCase {
    */
   public function testUserPicture() {
     // No user picture style or dimensions.
-    variable_set('user_picture_style', '');
-    variable_set('user_picture_dimensions', '');
-    $user1 = $this->drupalCreateUser();
+    config_set('system.core', 'user_picture_style', '');
+    config_set('system.core', 'user_picture_dimensions', '');
+    $user1 = $this->backdropCreateUser();
     $this->saveUserPicture($user1);
     $this->assertImageIsRotated($user1->picture->uri);
 
     // Applied user picture style.
-    variable_set('user_picture_style', 'medium');
-    variable_set('user_picture_dimensions', '');
-    $user2 = $this->drupalCreateUser();
+    config_set('system.core', 'user_picture_style', 'medium');
+    config_set('system.core', 'user_picture_dimensions', '');
+    $user2 = $this->backdropCreateUser();
     $this->saveUserPicture($user2);
     $this->assertImageIsRotated($user2->picture->uri);
 
     // Defined picture dimensions.
-    variable_set('user_picture_style', '');
-    variable_set('user_picture_dimensions', '50x50');
-    $user3 = $this->drupalCreateUser();
+    config_set('system.core', 'user_picture_style', '');
+    config_set('system.core', 'user_picture_dimensions', '50x50');
+    $user3 = $this->backdropCreateUser();
     $this->saveUserPicture($user3);
     $this->assertImageIsRotated($user3->picture->uri);
 
     // Defined picture style and dimensions.
-    variable_set('user_picture_style', 'medium');
-    variable_set('user_picture_dimensions', '50x50');
-    $user4 = $this->drupalCreateUser();
+    config_set('system.core', 'user_picture_style', 'medium');
+    config_set('system.core', 'user_picture_dimensions', '50x50');
+    $user4 = $this->backdropCreateUser();
     $this->saveUserPicture($user4);
     $this->assertImageIsRotated($user4->picture->uri);
   }
@@ -77,9 +77,9 @@ class ExifOrientationTest extends DrupalWebTestCase {
    * Uploads a user picture.
    */
   private function saveUserPicture(&$account) {
-    $this->drupalLogin($account);
-    $edit = array('files[picture_upload]' => drupal_realpath(drupal_get_path('module', 'exif_orientation') . '/tests/rotate90cw.jpg'));
-    $this->drupalPost('user/' . $account->uid . '/edit', $edit, t('Save'));
+    $this->backdropLogin($account);
+    $edit = array('files[picture_upload]' => backdrop_realpath(backdrop_get_path('module', 'exif_orientation') . '/tests/rotate90cw.jpg'));
+    $this->backdropPost('user/' . $account->uid . '/edit', $edit, t('Save'));
     $account = user_load($account->uid, TRUE);
     $this->assertTrue(isset($account->picture) && isset($account->picture->uri), 'The picture has been uploaded successfully.');
   }
@@ -88,7 +88,7 @@ class ExifOrientationTest extends DrupalWebTestCase {
    * Verify that an image is landscape and has a red top left corner.
    */
   private function assertImageIsRotated($uri) {
-    $uri = drupal_realpath($uri);
+    $uri = backdrop_realpath($uri);
 
     $img = image_load($uri);
     $this->assertTrue(is_object($img), 'Image data is available.');
