@@ -48,9 +48,7 @@ function _exif_orientation_validate_user_picture(&$form, &$form_state) {
  * Image validator which rotates the image.
  */
 function _exif_orientation_validate_image_callback(stdClass $file) {
-  _exif_orientation_rotate($file);
-  // This validator did not produce any errors.
-  return array();
+  return _exif_orientation_rotate($file);
 }
 
 /**
@@ -64,6 +62,9 @@ function exif_orientation_file_presave($file) {
 /**
  * Rotates an image to its EXIF Orientation
  *
+ * @return
+ * An array with any error messages.
+ *
  * iPhone 4 and up save all images in landscape, relying on EXIF data to
  * set the orientation properly. This does not always translate well in the
  * browser or other devices.
@@ -75,7 +76,8 @@ function _exif_orientation_rotate($file) {
 
     // Ensure that the Orientation key|value exists, otherwise leave.
     if (!is_array($file_exif) || !isset($file_exif['Orientation'])) {
-      return;
+      // This isn't an error.
+      return array();
     }
     // Orientation numbers and corresponding degrees.
     // @note: Odd numbers are flipped images, would need different process.
@@ -101,6 +103,20 @@ function _exif_orientation_rotate($file) {
         image_save($file_image);
       }
     }
+  }
+  // No errors, return empty array.
+  return array();
+}
+
+/**
+ * Implements hook_field_widget_WIDGET_TYPE_form_alter().
+ *
+ * Adds a validation to uploads to rotate them correctly.
+ */
+function exif_orientation_field_widget_image_image_form_alter(&$element, &$form_state, $context) {
+  $deltas = element_children($element);
+  foreach ($deltas as $delta) {
+    $element[$delta]['#upload_validators'] = array('_exif_orientation_rotate' => array()) + $element[$delta]['#upload_validators'];
   }
 }
 
